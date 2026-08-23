@@ -1,0 +1,13 @@
+{
+  "functions": {
+    "*.php": {
+      "runtime": "php@8.2"
+    }
+  },
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "/$1"
+    }
+  ]
+}
