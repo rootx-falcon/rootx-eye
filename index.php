@@ -1,6 +1,6 @@
 <?php
 
- $botToken = ';
+ $botToken = '';
  $apiURL   = "https://api.telegram.org/bot$botToken";
 
 // ═══════════ CONFIG ═══════════
