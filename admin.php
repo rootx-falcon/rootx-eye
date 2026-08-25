@@ -123,14 +123,16 @@ if (file_exists($captures_file)) {
     $captures = json_decode(file_get_contents($captures_file), true) ?: [];
 }
 
-if ($_GET['clear'] == 'all') {
+// ✅ FIX: Undefined array key warnings
+if (isset($_GET['clear']) && $_GET['clear'] == 'all') {
     foreach ($captures as $c) {
         if (!empty($c['file']) && file_exists($c['file'])) unlink($c['file']);
     }
     file_put_contents($captures_file, json_encode([]));
     header('Location: admin.php'); exit;
 }
-if ($_GET['delete'] && isset($captures[$_GET['delete']])) {
+
+if (isset($_GET['delete']) && isset($captures[$_GET['delete']])) {
     if (!empty($captures[$_GET['delete']]['file']) && file_exists($captures[$_GET['delete']]['file'])) {
         unlink($captures[$_GET['delete']]['file']);
     }
@@ -138,7 +140,8 @@ if ($_GET['delete'] && isset($captures[$_GET['delete']])) {
     file_put_contents($captures_file, json_encode(array_values($captures)));
     header('Location: admin.php'); exit;
 }
-if ($_GET['download'] && isset($captures[$_GET['download']])) {
+
+if (isset($_GET['download']) && isset($captures[$_GET['download']])) {
     $file = $captures[$_GET['download']]['file'];
     if (file_exists($file)) {
         header('Content-Type: application/octet-stream');
