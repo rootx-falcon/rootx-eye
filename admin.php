@@ -101,7 +101,7 @@ if (isset($_GET['view_user'])) {
             .card .info .time { color:#666; font-size:12px; }
             .card .info .ip { color:#888; font-size:12px; }
             .card .info .battery { font-size:12px; color:#00ff88; }
-            .card .actions { padding:10px 16px; background:rgba(255,255,255,0.02); display:flex; gap:10px; border-top:1px solid rgba(255,255,255,0.03); }
+            .card .actions { padding:10px 16px; background:rgba(255,255,255,0.02); display:flex; gap:10px; flex-wrap:wrap; border-top:1px solid rgba(255,255,255,0.03); }
             .card .actions a { padding:5px 14px; border-radius:6px; text-decoration:none; font-size:12px; font-weight:500; transition:0.3s; }
             .card .actions a:hover { opacity:0.8; }
             .btn-download { background:#00b894; color:#fff; }
@@ -147,9 +147,9 @@ if (isset($_GET['view_user'])) {
                             $file = $capture['file'] ?? '';
                             ?>
                             <?php if ($type == 'photo' && !empty($file) && file_exists($file)): ?>
-                                <img src="<?= $file ?>" alt="Photo">
+                                <img src="<?= $file ?>" alt="Photo" style="width:100%; height:100%; object-fit:cover;">
                             <?php elseif ($type == 'video' && !empty($file) && file_exists($file)): ?>
-                                <video src="<?= $file ?>" muted></video>
+                                <video src="<?= $file ?>" muted style="width:100%; height:100%; object-fit:cover;"></video>
                             <?php elseif ($type == 'voice' && !empty($file) && file_exists($file)): ?>
                                 <div style="text-align:center; padding:20px; width:100%;">
                                     <div style="font-size:50px;">🎤</div>
