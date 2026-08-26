@@ -1,5 +1,5 @@
 <?php
-$data_dir = 'data/';
+$data_dir = '/tmp/data/';
 $captures_file = $data_dir . 'captures.json';
 
 if (!is_dir($data_dir)) {
