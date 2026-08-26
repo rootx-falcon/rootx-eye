@@ -22,82 +22,21 @@ if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
     <head>
         <meta charset="UTF-8">
         <title>ROOTX EYE Admin</title>
-        <meta name="viewport" content="width=device-width, initial-scale=1">
         <style>
             * { margin:0; padding:0; box-sizing:border-box; }
-            body {
-                background: #0a0a1a;
-                font-family: 'Segoe UI', sans-serif;
-                display: flex;
-                justify-content: center;
-                align-items: center;
-                min-height: 100vh;
-                color: #fff;
-            }
-            .login-box {
-                background: rgba(255,255,255,0.05);
-                backdrop-filter: blur(10px);
-                padding: 40px;
-                border-radius: 20px;
-                border: 1px solid rgba(255,255,255,0.1);
-                width: 350px;
-                text-align: center;
-            }
-            .login-box h1 {
-                font-size: 32px;
-                background: linear-gradient(45deg, #ff0033, #ff0066);
-                -webkit-background-clip: text;
-                -webkit-text-fill-color: transparent;
-            }
-            .login-box .sub {
-                color: #666;
-                font-size: 14px;
-                margin-bottom: 25px;
-            }
-            .login-box input {
-                width: 100%;
-                padding: 12px 15px;
-                margin: 8px 0;
-                background: rgba(255,255,255,0.05);
-                border: 1px solid #333;
-                border-radius: 8px;
-                color: #fff;
-                font-size: 14px;
-            }
-            .login-box input:focus {
-                border-color: #ff0066;
-                outline: none;
-            }
-            .login-box button {
-                width: 100%;
-                padding: 12px;
-                background: linear-gradient(45deg, #ff0033, #ff0066);
-                border: none;
-                border-radius: 8px;
-                color: #fff;
-                font-size: 16px;
-                font-weight: bold;
-                cursor: pointer;
-                transition: 0.3s;
-                margin-top: 10px;
-            }
-            .login-box button:hover { transform: scale(1.02); }
-            .login-box .footer {
-                margin-top: 20px;
-                font-size: 12px;
-                color: #444;
-            }
-            .login-box .error {
-                color: #ff0033;
-                font-size: 13px;
-                margin-top: 10px;
-            }
+            body { background:#0a0a1a; font-family:'Segoe UI',sans-serif; display:flex; justify-content:center; align-items:center; min-height:100vh; color:#fff; }
+            .login-box { background:rgba(255,255,255,0.05); backdrop-filter:blur(10px); padding:40px; border-radius:20px; border:1px solid rgba(255,255,255,0.1); width:350px; text-align:center; }
+            .login-box h1 { font-size:32px; background:linear-gradient(45deg,#ff0033,#ff0066); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+            .login-box input { width:100%; padding:12px; margin:8px 0; background:rgba(255,255,255,0.05); border:1px solid #333; border-radius:8px; color:#fff; }
+            .login-box button { width:100%; padding:12px; background:linear-gradient(45deg,#ff0033,#ff0066); border:none; border-radius:8px; color:#fff; font-size:16px; font-weight:bold; cursor:pointer; }
+            .login-box button:hover { transform:scale(1.02); }
+            .login-box .error { color:#ff0033; margin-top:10px; }
         </style>
     </head>
     <body>
         <div class="login-box">
             <h1>👁️ ROOTX EYE</h1>
-            <div class="sub">Admin Panel Login</div>
+            <div style="color:#666; font-size:14px; margin-bottom:25px;">Admin Panel Login</div>
             <form method="POST">
                 <input type="text" name="username" placeholder="Username" required>
                 <input type="password" name="password" placeholder="Password" required>
@@ -106,7 +45,7 @@ if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
             <?php if ($error): ?>
                 <div class="error"><?= $error ?></div>
             <?php endif; ?>
-            <div class="footer">🔒 Secure Admin Access</div>
+            <div style="color:#444; font-size:12px; margin-top:20px;">🔒 Secure Admin Access</div>
         </div>
     </body>
     </html>
@@ -118,43 +57,178 @@ $data_dir = 'data/';
 $captures_file = $data_dir . 'captures.json';
 if (!is_dir($data_dir)) mkdir($data_dir, 0777, true);
 
-$captures = [];
+// Load captures and group by user ID
+$users = [];
 if (file_exists($captures_file)) {
     $captures = json_decode(file_get_contents($captures_file), true) ?: [];
+    foreach ($captures as $capture) {
+        $user_id = $capture['id'] ?? 'unknown';
+        if (!isset($users[$user_id])) {
+            $users[$user_id] = [
+                'id' => $user_id,
+                'ip' => $capture['ip'] ?? 'N/A',
+                'user_agent' => $capture['user_agent'] ?? 'N/A',
+                'first_seen' => $capture['time'] ?? date('Y-m-d H:i:s'),
+                'captures' => []
+            ];
+        }
+        $users[$user_id]['captures'][] = $capture;
+    }
 }
 
-// ✅ FIX: Undefined array key warnings
-if (isset($_GET['clear']) && $_GET['clear'] == 'all') {
-    foreach ($captures as $c) {
-        if (!empty($c['file']) && file_exists($c['file'])) unlink($c['file']);
+// View single user
+if (isset($_GET['view_user']) && isset($users[$_GET['view_user']])) {
+    $user = $users[$_GET['view_user']];
+    ?>
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="UTF-8">
+        <title>User Data - ROOTX EYE</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <style>
+            * { margin:0; padding:0; box-sizing:border-box; }
+            body { background:#0a0a1a; font-family:'Segoe UI',sans-serif; color:#fff; padding:20px; }
+            .container { max-width:1200px; margin:0 auto; }
+            .header { background:linear-gradient(135deg,#1a0033,#33001a); padding:20px 30px; border-radius:15px; margin-bottom:30px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; }
+            .header h1 { font-size:28px; background:linear-gradient(45deg,#ff0033,#ff0066); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+            .btn-back { background:#3498db; color:#fff; padding:8px 20px; border:none; border-radius:8px; cursor:pointer; text-decoration:none; font-weight:bold; }
+            .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:20px; }
+            .card { background:rgba(255,255,255,0.03); border-radius:14px; overflow:hidden; border:1px solid rgba(255,255,255,0.06); }
+            .card .preview { width:100%; height:200px; background:#0d0d20; display:flex; justify-content:center; align-items:center; font-size:50px; overflow:hidden; position:relative; }
+            .card .preview img, .card .preview video { width:100%; height:100%; object-fit:cover; }
+            .card .info { padding:14px 16px; }
+            .card .info .time { color:#666; font-size:12px; }
+            .card .info .ip { color:#888; font-size:12px; }
+            .card .actions { padding:10px 16px; background:rgba(255,255,255,0.02); display:flex; gap:10px; border-top:1px solid rgba(255,255,255,0.03); }
+            .card .actions a { padding:5px 14px; border-radius:6px; text-decoration:none; font-size:12px; font-weight:500; transition:0.3s; }
+            .card .actions a:hover { opacity:0.8; }
+            .btn-download { background:#00b894; color:#fff; }
+            .btn-delete { background:#e74c3c; color:#fff; }
+            .empty { text-align:center; padding:60px 20px; color:#555; grid-column:1/-1; }
+            .badge { display:inline-block; padding:2px 10px; border-radius:20px; font-size:10px; font-weight:bold; text-transform:uppercase; color:#fff; }
+            .badge.photo { background:#00b894; }
+            .badge.video { background:#9b59b6; }
+            .badge.voice { background:#f39c12; }
+            .badge.location { background:#3498db; }
+            @media (max-width:600px) { .header { flex-direction:column; text-align:center; gap:15px; } .grid { grid-template-columns:1fr; } }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="header">
+                <div>
+                    <h1>👤 User: <?= htmlspecialchars($user['id']) ?></h1>
+                    <div style="color:#666; font-size:13px;">🌐 IP: <?= htmlspecialchars($user['ip']) ?> | 📅 First seen: <?= htmlspecialchars($user['first_seen']) ?></div>
+                </div>
+                <a href="admin.php" class="btn-back">🔙 Back</a>
+            </div>
+            <div class="grid">
+                <?php if (empty($user['captures'])): ?>
+                    <div class="empty">No captures for this user.</div>
+                <?php else: ?>
+                    <?php foreach (array_reverse($user['captures']) as $index => $capture): ?>
+                    <div class="card">
+                        <div class="preview">
+                            <?php if (($capture['type'] ?? '') == 'photo' && !empty($capture['file'])): ?>
+                                <img src="<?= $capture['file'] ?>" alt="Photo">
+                            <?php elseif (($capture['type'] ?? '') == 'video' && !empty($capture['file'])): ?>
+                                <video src="<?= $capture['file'] ?>" muted></video>
+                            <?php elseif (($capture['type'] ?? '') == 'voice' && !empty($capture['file'])): ?>
+                                <div style="text-align:center; padding:20px;">
+                                    <div style="font-size:50px;">🎤</div>
+                                    <audio controls style="width:100%; margin-top:10px;">
+                                        <source src="<?= $capture['file'] ?>" type="audio/mpeg">
+                                    </audio>
+                                </div>
+                            <?php elseif (($capture['type'] ?? '') == 'location'): ?>
+                                <div style="text-align:center; padding:20px;">
+                                    <div style="font-size:40px;">📍</div>
+                                    <div style="font-size:14px; color:#aaa; margin-top:10px;">
+                                        Lat: <?= $capture['lat'] ?? 'N/A' ?><br>
+                                        Lng: <?= $capture['lng'] ?? 'N/A' ?>
+                                    </div>
+                                    <a href="https://maps.google.com/?q=<?= $capture['lat'] ?? '' ?>,<?= $capture['lng'] ?? '' ?>" target="_blank" style="color:#3498db; font-size:12px;">🗺️ View Map</a>
+                                </div>
+                            <?php else: ?>
+                                <span style="font-size:40px; color:#333;">❓</span>
+                            <?php endif; ?>
+                            <span class="badge <?= $capture['type'] ?? 'unknown' ?>" style="position:absolute;top:10px;right:10px;">
+                                <?= $capture['type'] ?? 'Unknown' ?>
+                            </span>
+                        </div>
+                        <div class="info">
+                            <div class="time">🕐 <?= $capture['time'] ?? 'N/A' ?></div>
+                            <div class="ip">🌐 IP: <?= $capture['ip'] ?? 'N/A' ?></div>
+                        </div>
+                        <div class="actions">
+                            <?php if (($capture['type'] ?? '') != 'location' && !empty($capture['file'])): ?>
+                                <a href="?download=<?= $index ?>&user=<?= $user['id'] ?>" class="btn-download">⬇️ Download</a>
+                            <?php endif; ?>
+                            <a href="?delete=<?= $index ?>&user=<?= $user['id'] ?>" class="btn-delete" onclick="return confirm('Delete this capture?')">🗑️ Delete</a>
+                        </div>
+                    </div>
+                    <?php endforeach; ?>
+                <?php endif; ?>
+            </div>
+        </div>
+    </body>
+    </html>
+    <?php
+    exit;
+}
+
+// Delete user data
+if (isset($_GET['delete_user']) && isset($users[$_GET['delete_user']])) {
+    $user_id = $_GET['delete_user'];
+    foreach ($users[$user_id]['captures'] as $capture) {
+        if (!empty($capture['file']) && file_exists($capture['file'])) {
+            unlink($capture['file']);
+        }
+    }
+    unset($users[$user_id]);
+    $all_captures = [];
+    foreach ($users as $u) {
+        $all_captures = array_merge($all_captures, $u['captures']);
+    }
+    file_put_contents($captures_file, json_encode($all_captures, JSON_PRETTY_PRINT));
+    header('Location: admin.php');
+    exit;
+}
+
+// Delete single capture from user
+if (isset($_GET['delete']) && isset($_GET['user']) && isset($users[$_GET['user']])) {
+    $user_id = $_GET['user'];
+    $index = $_GET['delete'];
+    if (isset($users[$user_id]['captures'][$index])) {
+        $capture = $users[$user_id]['captures'][$index];
+        if (!empty($capture['file']) && file_exists($capture['file'])) {
+            unlink($capture['file']);
+        }
+        unset($users[$user_id]['captures'][$index]);
+        $users[$user_id]['captures'] = array_values($users[$user_id]['captures']);
+        $all_captures = [];
+        foreach ($users as $u) {
+            $all_captures = array_merge($all_captures, $u['captures']);
+        }
+        file_put_contents($captures_file, json_encode($all_captures, JSON_PRETTY_PRINT));
+        header("Location: admin.php?view_user=$user_id");
+        exit;
+    }
+}
+
+// Clear all data
+if (isset($_GET['clear_all'])) {
+    foreach ($users as $u) {
+        foreach ($u['captures'] as $capture) {
+            if (!empty($capture['file']) && file_exists($capture['file'])) {
+                unlink($capture['file']);
+            }
+        }
     }
     file_put_contents($captures_file, json_encode([]));
-    header('Location: admin.php'); exit;
-}
-
-if (isset($_GET['delete']) && isset($captures[$_GET['delete']])) {
-    if (!empty($captures[$_GET['delete']]['file']) && file_exists($captures[$_GET['delete']]['file'])) {
-        unlink($captures[$_GET['delete']]['file']);
-    }
-    unset($captures[$_GET['delete']]);
-    file_put_contents($captures_file, json_encode(array_values($captures)));
-    header('Location: admin.php'); exit;
-}
-
-if (isset($_GET['download']) && isset($captures[$_GET['download']])) {
-    $file = $captures[$_GET['download']]['file'];
-    if (file_exists($file)) {
-        header('Content-Type: application/octet-stream');
-        header('Content-Disposition: attachment; filename="' . basename($file) . '"');
-        readfile($file); exit;
-    }
-}
-
-$total = count($captures);
-$types = [];
-foreach ($captures as $c) {
-    $t = $c['type'] ?? 'unknown';
-    $types[$t] = ($types[$t] ?? 0) + 1;
+    header('Location: admin.php');
+    exit;
 }
 ?>
 <!DOCTYPE html>
@@ -163,197 +237,72 @@ foreach ($captures as $c) {
     <meta charset="UTF-8">
     <title>ROOTX EYE Admin</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
     <style>
         * { margin:0; padding:0; box-sizing:border-box; }
-        body {
-            background: #0a0a1a;
-            font-family: 'Orbitron', 'Segoe UI', sans-serif;
-            color: #fff;
-            padding: 20px;
-            min-height: 100vh;
-        }
-        .container { max-width: 1400px; margin: 0 auto; }
+        body { background:#0a0a1a; font-family:'Segoe UI',sans-serif; color:#fff; padding:20px; min-height:100vh; }
+        .container { max-width:1400px; margin:0 auto; }
         
         .header {
-            background: linear-gradient(135deg, #1a0033, #33001a, #1a0033);
-            padding: 30px;
-            border-radius: 15px;
-            margin-bottom: 30px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            border: 1px solid rgba(255,0,102,0.2);
-            box-shadow: 0 0 30px rgba(255,0,102,0.1);
+            background:linear-gradient(135deg,#1a0033,#33001a,#1a0033);
+            padding:30px; border-radius:15px; margin-bottom:30px;
+            display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap;
+            border:1px solid rgba(255,0,102,0.2);
         }
-        .header h1 {
-            font-size: 32px;
-            background: linear-gradient(45deg, #ff0033, #ff0066, #ff0033);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            text-shadow: 0 0 20px rgba(255,0,102,0.3);
+        .header h1 { font-size:32px; background:linear-gradient(45deg,#ff0033,#ff0066); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+        .header .stats { background:rgba(255,255,255,0.05); padding:12px 25px; border-radius:12px; border:1px solid rgba(255,255,255,0.05); }
+        .header .stats span { color:#ff0066; font-weight:bold; font-size:18px; }
+        
+        .filters { display:flex; gap:12px; margin-bottom:25px; flex-wrap:wrap; align-items:center; }
+        .btn { padding:8px 20px; border:none; border-radius:8px; font-weight:600; cursor:pointer; transition:0.3s; font-size:13px; }
+        .btn:hover { transform:scale(1.02); }
+        .btn-refresh { background:#3498db; color:#fff; }
+        .btn-clear { background:#e74c3c; color:#fff; }
+        .btn-logout { background:#555; color:#fff; }
+        
+        .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(350px,1fr)); gap:20px; }
+        
+        .user-card {
+            background:rgba(255,255,255,0.03);
+            border-radius:14px; overflow:hidden;
+            border:1px solid rgba(255,255,255,0.06);
+            transition:0.3s;
         }
-        .header .sub {
-            color: #666;
-            font-size: 14px;
-            letter-spacing: 2px;
+        .user-card:hover { transform:translateY(-5px); border-color:rgba(255,0,102,0.3); }
+        
+        .user-header {
+            background:rgba(255,255,255,0.03);
+            padding:14px 18px;
+            border-bottom:1px solid rgba(255,255,255,0.05);
+            display:flex; justify-content:space-between; align-items:center;
         }
-        .header .stats {
-            background: rgba(255,255,255,0.05);
-            padding: 12px 25px;
-            border-radius: 12px;
-            border: 1px solid rgba(255,255,255,0.05);
+        .user-header .user-id { font-size:14px; color:#ff0066; font-weight:bold; }
+        .user-header .user-ip { font-size:12px; color:#666; }
+        
+        .user-body { padding:14px 18px; }
+        .capture-item {
+            display:flex; justify-content:space-between; align-items:center;
+            padding:4px 0; border-bottom:1px solid rgba(255,255,255,0.03);
+            font-size:13px;
         }
-        .header .stats span { color: #ff0066; font-weight: bold; font-size: 18px; }
-        .header .stats .label { color: #888; font-size: 13px; }
-
-        .filters {
-            display: flex;
-            gap: 12px;
-            margin-bottom: 25px;
-            flex-wrap: wrap;
-            align-items: center;
-        }
-        .filters select {
-            padding: 8px 16px;
-            background: rgba(255,255,255,0.05);
-            border: 1px solid #333;
-            border-radius: 8px;
-            color: #fff;
-            font-size: 14px;
-            cursor: pointer;
-            font-family: 'Orbitron', sans-serif;
-        }
-        .filters select:focus { border-color: #ff0066; outline: none; }
-        .btn {
-            padding: 8px 20px;
-            border: none;
-            border-radius: 8px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: 0.3s;
-            font-size: 13px;
-            font-family: 'Orbitron', sans-serif;
-        }
-        .btn:hover { transform: scale(1.02); }
-        .btn-refresh { background: #3498db; color: #fff; }
-        .btn-clear { background: #e74c3c; color: #fff; }
-        .btn-logout { background: #555; color: #fff; }
-
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 20px;
-        }
-
-        .card {
-            background: rgba(255,255,255,0.03);
-            border-radius: 14px;
-            overflow: hidden;
-            border: 1px solid rgba(255,255,255,0.06);
-            transition: 0.3s;
-        }
-        .card:hover {
-            transform: translateY(-5px);
-            border-color: rgba(255,0,102,0.3);
-            box-shadow: 0 10px 30px rgba(255,0,102,0.05);
-        }
-
-        .card .preview {
-            width: 100%;
-            height: 200px;
-            background: #0d0d20;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-size: 50px;
-            color: #333;
-            overflow: hidden;
-            position: relative;
-        }
-        .card .preview img,
-        .card .preview video {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-        .card .preview .type-badge {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 10px;
-            font-weight: bold;
-            text-transform: uppercase;
-            background: rgba(0,0,0,0.7);
-            color: #fff;
-            backdrop-filter: blur(4px);
-        }
-        .card .preview .type-badge.photo { border-left: 3px solid #00ff88; }
-        .card .preview .type-badge.video { border-left: 3px solid #ff0066; }
-        .card .preview .type-badge.voice { border-left: 3px solid #f39c12; }
-        .card .preview .type-badge.location { border-left: 3px solid #3498db; }
-
-        .card .info {
-            padding: 14px 16px;
-        }
-        .card .info .time {
-            color: #666;
-            font-size: 12px;
-        }
-        .card .info .ip {
-            color: #888;
-            font-size: 12px;
-            margin-top: 2px;
-        }
-        .card .info .ua {
-            color: #555;
-            font-size: 11px;
-            margin-top: 4px;
-            word-break: break-all;
-        }
-
-        .card .actions {
-            padding: 10px 16px;
-            background: rgba(255,255,255,0.02);
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-            border-top: 1px solid rgba(255,255,255,0.03);
-        }
-        .card .actions a {
-            padding: 5px 14px;
-            border-radius: 6px;
-            text-decoration: none;
-            font-size: 12px;
-            font-weight: 500;
-            transition: 0.3s;
-        }
-        .card .actions a:hover { opacity: 0.8; }
-        .btn-download { background: #00b894; color: #fff; }
-        .btn-delete { background: #e74c3c; color: #fff; }
-
-        .empty {
-            text-align: center;
-            padding: 80px 20px;
-            color: #444;
-            font-size: 18px;
-            grid-column: 1 / -1;
-        }
-        .empty .icon { font-size: 70px; margin-bottom: 15px; display: block; }
-        .empty .sub { color: #555; font-size: 14px; }
-
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: #0a0a1a; }
-        ::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
-        ::-webkit-scrollbar-thumb:hover { background: #555; }
-
-        @media (max-width: 600px) {
-            .header { flex-direction: column; text-align: center; gap: 15px; }
-            .grid { grid-template-columns: 1fr; }
-            .filters { justify-content: center; }
+        .capture-item .type { display:inline-block; padding:2px 10px; border-radius:20px; font-size:10px; font-weight:bold; text-transform:uppercase; }
+        .type.photo { background:#00b894; color:#fff; }
+        .type.video { background:#9b59b6; color:#fff; }
+        .type.voice { background:#f39c12; color:#fff; }
+        .type.location { background:#3498db; color:#fff; }
+        .capture-item .time { color:#666; font-size:11px; }
+        
+        .user-actions { padding:10px 18px; background:rgba(255,255,255,0.02); display:flex; gap:10px; flex-wrap:wrap; border-top:1px solid rgba(255,255,255,0.03); }
+        .user-actions a { padding:5px 14px; border-radius:6px; text-decoration:none; font-size:12px; font-weight:500; transition:0.3s; }
+        .user-actions a:hover { opacity:0.8; }
+        .btn-view { background:#3498db; color:#fff; }
+        .btn-delete-user { background:#e74c3c; color:#fff; }
+        
+        .empty { text-align:center; padding:80px 20px; color:#444; font-size:18px; grid-column:1/-1; }
+        .empty .icon { font-size:70px; margin-bottom:15px; display:block; }
+        
+        @media (max-width:600px) {
+            .header { flex-direction:column; text-align:center; gap:15px; }
+            .grid { grid-template-columns:1fr; }
         }
     </style>
 </head>
@@ -362,79 +311,59 @@ foreach ($captures as $c) {
         <div class="header">
             <div>
                 <h1>👁️ ROOTX EYE</h1>
-                <div class="sub">Admin Panel — Live Data Dashboard</div>
+                <div style="color:#666; font-size:14px;">User-Wise Data Dashboard</div>
             </div>
             <div class="stats">
-                <div><span><?= $total ?></span> <span class="label">Total Captures</span></div>
+                <div><span><?= count($users) ?></span> Total Users</div>
                 <div style="font-size:12px; color:#666; margin-top:4px;">
-                    <?php foreach ($types as $t => $c): ?>
-                        <?= $t ?>: <?= $c ?> &nbsp;
-                    <?php endforeach; ?>
+                    <?php 
+                        $total_captures = 0;
+                        foreach ($users as $u) $total_captures += count($u['captures']);
+                    ?>
+                    📦 <?= $total_captures ?> Captures
                 </div>
             </div>
         </div>
 
         <div class="filters">
-            <select id="filterType" onchange="filterCards()">
-                <option value="all">📋 All Types</option>
-                <option value="photo">📷 Photo</option>
-                <option value="video">🎥 Video</option>
-                <option value="voice">🎤 Voice</option>
-                <option value="location">📍 Location</option>
-            </select>
             <button class="btn btn-refresh" onclick="location.reload()">🔄 Refresh</button>
-            <button class="btn btn-clear" onclick="if(confirm('⚠️ Delete ALL data?')) location.href='?clear=all'">🗑️ Clear All</button>
+            <button class="btn btn-clear" onclick="if(confirm('⚠️ Delete ALL users data?')) location.href='?clear_all=1'">🗑️ Clear All</button>
             <button class="btn btn-logout" onclick="if(confirm('Logout?')) location.href='?logout=1'">🚪 Logout</button>
         </div>
 
-        <div class="grid" id="cardGrid">
-            <?php if (empty($captures)): ?>
+        <div class="grid">
+            <?php if (empty($users)): ?>
                 <div class="empty">
                     <span class="icon">📭</span>
                     No data captured yet.<br>
-                    <div class="sub">Share phishing links to collect data</div>
+                    <div style="color:#555; font-size:14px;">Share phishing links to collect data</div>
                 </div>
             <?php else: ?>
-                <?php foreach (array_reverse($captures) as $index => $capture): ?>
-                <div class="card" data-type="<?= $capture['type'] ?? 'unknown' ?>">
-                    <div class="preview">
-                        <?php if (($capture['type'] ?? '') == 'photo' && !empty($capture['file'])): ?>
-                            <img src="<?= $capture['file'] ?>" alt="Photo">
-                        <?php elseif (($capture['type'] ?? '') == 'video' && !empty($capture['file'])): ?>
-                            <video src="<?= $capture['file'] ?>" muted></video>
-                        <?php elseif (($capture['type'] ?? '') == 'voice' && !empty($capture['file'])): ?>
-                            <div style="text-align:center; padding:20px;">
-                                <div style="font-size:50px;">🎤</div>
-                                <audio controls style="width:100%; margin-top:10px;">
-                                    <source src="<?= $capture['file'] ?>" type="audio/mpeg">
-                                </audio>
-                            </div>
-                        <?php elseif (($capture['type'] ?? '') == 'location'): ?>
-                            <div style="text-align:center; padding:20px;">
-                                <div style="font-size:40px;">📍</div>
-                                <div style="font-size:14px; color:#aaa; margin-top:10px;">
-                                    Lat: <?= $capture['lat'] ?? 'N/A' ?><br>
-                                    Lng: <?= $capture['lng'] ?? 'N/A' ?>
-                                </div>
-                                <a href="https://maps.google.com/?q=<?= $capture['lat'] ?? '' ?>,<?= $capture['lng'] ?? '' ?>" target="_blank" style="color:#3498db; font-size:12px;">🗺️ View Map</a>
-                            </div>
-                        <?php else: ?>
-                            <span style="font-size:40px; color:#333;">❓</span>
-                        <?php endif; ?>
-                        <span class="type-badge <?= $capture['type'] ?? 'unknown' ?>">
-                            <?= $capture['type'] ?? 'Unknown' ?>
-                        </span>
+                <?php foreach ($users as $user_id => $user): ?>
+                <div class="user-card">
+                    <div class="user-header">
+                        <span class="user-id">👤 <?= htmlspecialchars($user_id) ?></span>
+                        <span class="user-ip">🌐 <?= htmlspecialchars($user['ip']) ?></span>
                     </div>
-                    <div class="info">
-                        <div class="time">🕐 <?= $capture['time'] ?? 'N/A' ?></div>
-                        <div class="ip">🌐 IP: <?= $capture['ip'] ?? 'N/A' ?></div>
-                        <div class="ua">📱 <?= isset($capture['user_agent']) ? substr($capture['user_agent'], 0, 60) . '...' : 'N/A' ?></div>
-                    </div>
-                    <div class="actions">
-                        <?php if (($capture['type'] ?? '') != 'location' && !empty($capture['file'])): ?>
-                            <a href="?download=<?= $index ?>" class="btn-download">⬇️ Download</a>
+                    <div class="user-body">
+                        <div style="font-size:11px; color:#555; margin-bottom:8px;">
+                            📅 First seen: <?= htmlspecialchars($user['first_seen']) ?>
+                        </div>
+                        <?php foreach (array_slice($user['captures'], -5) as $capture): ?>
+                        <div class="capture-item">
+                            <span class="type <?= $capture['type'] ?? 'unknown' ?>">
+                                <?= $capture['type'] ?? 'Unknown' ?>
+                            </span>
+                            <span class="time"><?= $capture['time'] ?? 'N/A' ?></span>
+                        </div>
+                        <?php endforeach; ?>
+                        <?php if (count($user['captures']) > 5): ?>
+                            <div style="font-size:11px; color:#555; margin-top:4px;">+ <?= count($user['captures']) - 5 ?> more...</div>
                         <?php endif; ?>
-                        <a href="?delete=<?= $index ?>" class="btn-delete" onclick="return confirm('Delete this capture?')">🗑️ Delete</a>
+                    </div>
+                    <div class="user-actions">
+                        <a href="?view_user=<?= $user_id ?>" class="btn-view">📂 View All Data</a>
+                        <a href="?delete_user=<?= $user_id ?>" class="btn-delete-user" onclick="return confirm('Delete this user?')">🗑️ Delete User</a>
                     </div>
                 </div>
                 <?php endforeach; ?>
@@ -443,16 +372,7 @@ foreach ($captures as $c) {
     </div>
 
     <script>
-        function filterCards() {
-            const filter = document.getElementById('filterType').value;
-            const cards = document.querySelectorAll('.card');
-            cards.forEach(card => {
-                const type = card.dataset.type;
-                card.style.display = (filter === 'all' || type === filter) ? 'block' : 'none';
-            });
-        }
-
-        setTimeout(() => location.reload(), 10000);
+        setTimeout(() => location.reload(), 15000);
     </script>
 </body>
 </html>
