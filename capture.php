@@ -43,7 +43,6 @@ if (isset($_FILES['file']) && $_FILES['file']['error'] === UPLOAD_ERR_OK) {
     $filepath = $data_dir . $subdir . '/' . $filename;
     
     if (move_uploaded_file($file['tmp_name'], $filepath)) {
-        // ✅ Store relative path (for admin panel)
         $capture['file'] = $filepath;
     }
 }
