@@ -314,6 +314,24 @@ if (isset($_GET['logout'])) {
         .btn-clear { background:#e74c3c; color:#fff; }
         .btn-logout { background:#555; color:#fff; }
         
+        /* 🔥 PREVIEW BUTTON */
+        .btn-preview {
+            background: #3498db;
+            color: #fff;
+            padding: 5px 14px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-size: 12px;
+            font-weight: 500;
+            transition: 0.3s;
+            display: inline-block;
+            margin: 0 5px;
+        }
+        .btn-preview:hover {
+            opacity: 0.8;
+            transform: scale(1.02);
+        }
+        
         .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(350px,1fr)); gap:20px; }
         
         .user-card {
