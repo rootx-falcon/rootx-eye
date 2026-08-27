@@ -53,7 +53,7 @@ if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
     exit;
 }
 
-$data_dir = '/tmp/data/';
+$data_dir = 'data/';
 $captures_file = $data_dir . 'captures.json';
 if (!is_dir($data_dir)) mkdir($data_dir, 0777, true);
 
