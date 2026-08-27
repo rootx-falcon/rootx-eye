@@ -184,7 +184,7 @@ if (isset($_GET['view_user'])) {
                             <?php endif; ?>
                         </div>
                         <div class="actions">
-                            <?php if ($type != 'location' && !empty($file) && file_exists($file)): ?>
+                            <?php if ($type != 'location'): ?>
                                 <a href="<?= $file ?>" target="_blank" class="btn-preview">🖼️ Preview</a>
                                 <a href="?download=<?= $index ?>&user=<?= urlencode($user['ip']) ?>" class="btn-download">⬇️ Download</a>
                             <?php endif; ?>
