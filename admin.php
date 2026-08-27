@@ -106,7 +106,6 @@ if (isset($_GET['view_user'])) {
             .card .actions a:hover { opacity:0.8; }
             .btn-download { background:#00b894; color:#fff; }
             .btn-delete { background:#e74c3c; color:#fff; }
-            .btn-preview { background: #3498db; color: #fff; padding:5px 14px; border-radius:6px; text-decoration:none; font-size:12px; font-weight:500; transition:0.3s; }
             .badge { display:inline-block; padding:2px 10px; border-radius:20px; font-size:10px; font-weight:bold; text-transform:uppercase; color:#fff; }
             .badge.photo { background:#00b894; }
             .badge.video { background:#9b59b6; }
