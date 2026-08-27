@@ -185,6 +185,7 @@ if (isset($_GET['view_user'])) {
                         </div>
                         <div class="actions">
                             <?php if ($type != 'location' && !empty($file) && file_exists($file)): ?>
+                                <a href="<?= $file ?>" target="_blank" class="btn-preview">🖼️ Preview</a>
                                 <a href="?download=<?= $index ?>&user=<?= urlencode($user['ip']) ?>" class="btn-download">⬇️ Download</a>
                             <?php endif; ?>
                             <a href="?delete=<?= $index ?>&user=<?= urlencode($user['ip']) ?>" class="btn-delete" onclick="return confirm('Delete this capture?')">🗑️ Delete</a>
